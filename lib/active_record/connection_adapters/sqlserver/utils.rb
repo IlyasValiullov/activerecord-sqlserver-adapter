@@ -140,6 +140,10 @@ module ActiveRecord
           SQLServer::Utils::Name.new(name)
         end
 
+        def prepare_schemas(path)
+          path.split(',').map {|schema| quote_string_single(schema) }.join(',')
+        end
+
       end
     end
   end

@@ -281,20 +281,24 @@ module ActiveRecord
         def data_source_sql(name = nil, type: nil)
           scope = quoted_scope name, type: type
           table_name = lowercase_schema_reflection_sql 'TABLE_NAME'
-          sql = "SELECT #{table_name}"
+          table_schema = lowercase_schema_reflection_sql 'TABLE_SCHEMA'
+          schemas_set = SQLServer::Utils.prepare_schemas(schemas)
+
+          sql = "SELECT CONCAT(TABLE_SCHEMA, '.', #{table_name}) AS #{table_name}"
           sql << ' FROM INFORMATION_SCHEMA.TABLES WITH (NOLOCK)'
           sql << ' WHERE TABLE_CATALOG = DB_NAME()'
-          sql << " AND TABLE_SCHEMA = #{quote(scope[:schema])}"
+          sql << " AND TABLE_SCHEMA = #{quote(scope[:schema])}" if scope[:schema]
+          sql << " AND TABLE_SCHEMA IN (#{schemas_set})" unless scope[:schema]
           sql << " AND TABLE_NAME = #{quote(scope[:name])}" if scope[:name]
           sql << " AND TABLE_TYPE = #{quote(scope[:type])}" if scope[:type]
-          sql << " ORDER BY #{table_name}"
+          sql << " ORDER BY #{table_schema}, #{table_name}"
           sql
         end
 
         def quoted_scope(name = nil, type: nil)
           identifier = SQLServer::Utils.extract_identifiers(name)
           {}.tap do |scope|
-            scope[:schema] = identifier.schema || 'dbo'
+            scope[:schema] = identifier.schema #|| 'dbo'
             scope[:name] = identifier.object if identifier.object
             scope[:type] = type if type
           end

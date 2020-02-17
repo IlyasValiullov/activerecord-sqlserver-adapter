@@ -47,6 +47,7 @@ module ActiveRecord
       cattr_accessor :exclude_output_inserted_table_names, instance_accessor: false
       cattr_accessor :showplan_option, instance_accessor: false
       cattr_accessor :lowercase_schema_reflection
+      cattr_accessor :schemas
 
       self.cs_equality_operator = 'COLLATE Latin1_General_CS_AS_WS'
       self.use_output_inserted = true
@@ -419,7 +420,9 @@ module ActiveRecord
         config[:encoding].present? ? config[:encoding] : nil
       end
 
-      def configure_connection ; end
+      def configure_connection
+        self.schemas = @config[:schemas]
+      end
 
       def configure_application_name ; end
 
